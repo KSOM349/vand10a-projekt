@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vänd 10a - Spela Online</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .player {
+            background: rgba(255,255,255,0.2);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .current-turn {
+            border: 3px solid #ffeb3b;
+            background: rgba(255,235,59,0.2);
+            transform: scale(1.02);
+        }
+        .card {
+            display: inline-block;
+            background: white;
+            color: black;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid #333;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .card.playable {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        .connected { background: #4CAF50; }
+        .disconnected { background: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">Ansluter...</div>
+    
+    <div class="container">
+        <h1>🎴 Vänd 10a - Online (Realtid)</h1>
+        
+        <div class="game-info">
+            <h2>Toppkort: <span class="card" id="topCard">{{ game.top_card }}</span></h2>
+            <p>Riktning: <span id="direction">{{ "⏩ Framåt" if game.direction == 1 else "⏪ Bakåt" }}</span></p>
+            <p>Spelare online: <span id="onlineCount">1</span></p>
+        </div>
+
+        <div class="players">
+            <h3>👥 Spelare:</h3>
+            <div id="playersList">
+                {% for player in game.players %}
+                <div class="player {% if loop.index0 == game.current_player %}current-turn{% endif %}" id="player-{{ loop.index0 }}">
+                    {{ player }}{% if loop.index0 == game.current_player %} 🎮{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="actions">
+            <h3>🎮 Dina åtgärder:</h3>
+            <button onclick="playCard(0)" class="card">Spela Kort 1</button>
+            <button onclick="playCard(1)" class="card">Spela Kort 2</button>
+            <button onclick="playCard(2)" class="card">Spela Kort 3</button>
+            <button onclick="changeDirection()" class="card">🔄 Byt Riktning</button>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <p><a href="/" style="color: white;">← Tillbaka till startsidan</a></p>
+        </div>
+    </div>
+
+    <div id="notifications"></div>
+
+    <!-- WebSocket Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <script>
+        const socket = io();
+        let currentPlayerIndex = {{ game.current_player }};
+        
+        // إدارة حالة الاتصال
+        socket.on('connect', function() {
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+            document.getElementById('connectionStatus').textContent = '✅ Ansluten';
+            console.log('Ansluten till servern');
+            
+            // انضم إلى اللعبة
+            socket.emit('join_game', {name: 'Spelare'});
+        });
+        
+        socket.on('disconnect', function() {
+            document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            document.getElementById('connectionStatus').textContent = '❌ Ej ansluten';
+        });
+        
+        // استقبال تحديثات اللعبة
+        socket.on('game_update', function(data) {
+            showNotification(data.message);
+            updateGameState(data.game_state);
+        });
+        
+        // عند انضمام لاعب جديد
+        socket.on('player_joined', function(data) {
+            showNotification(`${data.player} gick med i spelet!`);
+            document.getElementById('onlineCount').textContent = data.all_players.length;
+        });
+        
+        // وظائف اللعبة
+        function playCard(cardIndex) {
+            if (currentPlayerIndex !== {{ game.current_player }}) {
+                showNotification('⏳ Det är inte din tur!', 'error');
+                return;
+            }
+            
+            socket.emit('play_card', {
+                player_index: {{ game.current_player }},
+                card_index: cardIndex
+            });
+            
+            showNotification(`Du spelar kort ${cardIndex + 1}...`);
+        }
+        
+        function changeDirection() {
+            socket.emit('change_direction');
+            showNotification('🔄 Riktning ändras...');
+        }
+        
+        function updateGameState(newState) {
+            // تحديث الكرت العلوي
+            document.getElementById('topCard').textContent = newState.top_card;
+            
+            // تحديث الاتجاه
+            document.getElementById('direction').textContent = 
+                newState.direction == 1 ? '⏩ Framåt' : '⏪ Bakåt';
+            
+            // تحديث اللاعب الحالي
+            currentPlayerIndex = newState.current_player;
+            
+            // تحديث قائمة اللاعبين
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = newState.players.map((player, index) => `
+                <div class="player ${index === newState.current_player ? 'current-turn' : ''}" id="player-${index}">
+                    ${player}${index === newState.current_player ? ' 🎮' : ''}
+                </div>
+            `).join('');
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? '#f44336' : '#4CAF50';
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // تحديث تلقائي كل 5 ثواني (لل演示)
+        setInterval(() => {
+            if (Math.random() > 0.7) { // 30% فرصة لتحديث عشوائي
+                socket.emit('play_card', {
+                    player_index: currentPlayerIndex,
+                    card_index: Math.floor(Math.random() * 3)
+                });
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
