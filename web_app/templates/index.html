@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vänd 10a - Webbspel</title>
+    <title>Vänd 10a - Online Spel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
         }
         .game-container {
             background: rgba(255, 255, 255, 0.1);
@@ -20,7 +24,13 @@
             padding: 30px;
             border-radius: 15px;
             margin: 20px 0;
+        }
+        .top-card {
             text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
         }
         .card {
             display: inline-block;
@@ -35,11 +45,15 @@
             font-weight: bold;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
         }
         .card.red { color: red; }
-        .card.back {
-            background: linear-gradient(45deg, #ff6b6b, #ffa726);
-            color: white;
+        .card.played {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         button {
             background: #ffd700;
@@ -51,9 +65,14 @@
             cursor: pointer;
             margin: 10px;
             font-weight: bold;
+            transition: background 0.3s;
         }
         button:hover {
             background: #ffed4e;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
         }
         .info {
             background: rgba(0, 0, 0, 0.3);
@@ -61,113 +80,227 @@
             border-radius: 10px;
             margin: 15px 0;
         }
+        .players {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .player {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .current-player {
+            background: #ffd700;
+            color: black;
+        }
+        .direction {
+            font-size: 24px;
+            margin: 0 10px;
+        }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1>🎴 Vänd 10a - Online</h1>
+        <p>Spela direkt i webbläsaren - Ingen installation krävs!</p>
+    </div>
+
     <div class="game-container">
-        <h1>🎴 Vänd 10a - Webbversion</h1>
-        <p>Ett interaktivt kortspel direkt i webbläsaren!</p>
-        
+        <!-- Toppkort och riktning -->
+        <div class="top-card">
+            <h3>📊 Spelstatus</h3>
+            <div id="top-card-display">
+                <div class="card">?</div>
+            </div>
+            <div style="margin: 15px 0;">
+                <span>Riktning: </span>
+                <span class="direction" id="direction">⏩</span>
+                <span id="direction-text">Framåt</span>
+            </div>
+        </div>
+
+        <!-- Spelare -->
         <div class="info">
-            <h3>🚫 Begränsad Demo</h3>
-            <p>Den fulla webbversionen med Flask-server kan köras lokalt.</p>
-            <p>För att spela den kompletta versionen:</p>
-            <code style="background: rgba(0,0,0,0.5); padding: 10px; display: block; border-radius: 5px;">
-                cd web_app<br>
-                python3 app.py
-            </code>
+            <h3>👥 Spelare Online</h3>
+            <div class="players" id="players-list">
+                <div class="player current-player">Du 🎮</div>
+                <div class="player">Marcus</div>
+                <div class="player">Fahad</div>
+                <div class="player">Ruffin</div>
+                <div class="player">Kaled</div>
+                <div class="player">Murgar</div>
+            </div>
         </div>
 
-        <div id="game-board">
-            <!-- Korten kommer här -->
-        </div>
-
-        <div>
-            <button onclick="dealCards()">Dela kort</button>
-            <button onclick="flipCard()">Vänd kort</button>
-            <button onclick="resetGame()">Nollställ</button>
-        </div>
-
+        <!-- Dina kort -->
         <div class="info">
-            <h3>📊 Spelstatistik</h3>
+            <h3>🎮 Dina Kort</h3>
+            <div id="player-cards">
+                <!-- Korten kommer här -->
+            </div>
+            <div style="margin-top: 20px;">
+                <button onclick="playCard(0)">Spela Kort 1</button>
+                <button onclick="playCard(1)">Spela Kort 2</button>
+                <button onclick="playCard(2)">Spela Kort 3</button>
+                <button onclick="changeDirection()" style="background: #ff6b6b;">🔄 Byt Riktning</button>
+            </div>
+        </div>
+
+        <!-- Spelstatistik -->
+        <div class="info">
+            <h3>📈 Spelstatistik</h3>
             <p>Antal drag: <span id="moves">0</span></p>
-            <p>Kort kvar: <span id="cards-left">0</span></p>
+            <p>Kort kvar i leken: <span id="cards-left">52</span></p>
+            <p>Spelare online: <span id="players-online">6</span></p>
+        </div>
+
+        <!-- Kontroller -->
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="newGame()" style="background: #2ecc71;">🔄 Nytt Spel</button>
+            <button onclick="resetGame()" style="background: #e74c3c;">❌ Avsluta</button>
+            <a href="../index.html" style="text-decoration: none;">
+                <button style="background: #3498db;">← Tillbaka</button>
+            </a>
         </div>
     </div>
 
     <script>
-        let cards = [];
-        let moves = 0;
+        // Spelstatus
+        let gameState = {
+            topCard: null,
+            direction: 1, // 1 = framåt, -1 = bakåt
+            playerCards: [],
+            moves: 0,
+            deckSize: 52,
+            currentPlayer: 0
+        };
 
-        function dealCards() {
-            const suits = ['♠', '♥', '♦', '♣'];
-            const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-            
-            cards = [];
+        // Kortleken
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // Starta spelet
+        function newGame() {
+            // Skapa en blandad kortlek
+            let deck = [];
             for (let suit of suits) {
                 for (let value of values) {
-                    cards.push({
-                        value: value,
-                        suit: suit,
-                        flipped: false
-                    });
+                    deck.push({ value, suit });
                 }
             }
+            deck = shuffleArray(deck);
             
-            // Blanda korten
-            cards.sort(() => Math.random() - 0.5);
+            // Ge spelaren 3 kort
+            gameState.playerCards = deck.splice(0, 3);
+            gameState.topCard = deck.pop();
+            gameState.deckSize = deck.length;
+            gameState.moves = 0;
+            gameState.direction = 1;
             
-            displayCards();
-            updateStats();
+            updateGameDisplay();
         }
 
-        function displayCards() {
-            const board = document.getElementById('game-board');
-            board.innerHTML = '';
+        // Blanda array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Spela ett kort
+        function playCard(cardIndex) {
+            if (cardIndex >= gameState.playerCards.length) return;
             
-            // Visa bara de första 10 korten för demo
-            const displayCards = cards.slice(0, 10);
+            const card = gameState.playerCards[cardIndex];
+            gameState.topCard = card;
+            gameState.playerCards.splice(cardIndex, 1);
+            gameState.moves++;
             
-            displayCards.forEach((card, index) => {
-                const cardElement = document.createElement('div');
-                cardElement.className = `card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''} ${card.flipped ? '' : 'back'}`;
-                
-                if (card.flipped) {
-                    cardElement.textContent = `${card.value}${card.suit}`;
-                } else {
-                    cardElement.textContent = '?';
-                }
-                
-                cardElement.onclick = () => flipCard(index);
-                board.appendChild(cardElement);
+            // Lägg till nytt kort från leken (simulerat)
+            if (gameState.deckSize > 0) {
+                gameState.playerCards.push({ 
+                    value: values[Math.floor(Math.random() * values.length)], 
+                    suit: suits[Math.floor(Math.random() * suits.length)] 
+                });
+                gameState.deckSize--;
+            }
+            
+            updateGameDisplay();
+        }
+
+        // Byt riktning
+        function changeDirection() {
+            gameState.direction = -gameState.direction;
+            gameState.moves++;
+            updateGameDisplay();
+        }
+
+        // Uppdatera speldisplay
+        function updateGameDisplay() {
+            // Toppkort
+            const topCardDisplay = document.getElementById('top-card-display');
+            if (gameState.topCard) {
+                topCardDisplay.innerHTML = `
+                    <div class="card ${isRedSuit(gameState.topCard.suit) ? 'red' : ''}">
+                        ${gameState.topCard.value}${gameState.topCard.suit}
+                    </div>
+                `;
+            }
+
+            // Riktning
+            const directionEl = document.getElementById('direction');
+            const directionText = document.getElementById('direction-text');
+            if (gameState.direction === 1) {
+                directionEl.textContent = '⏩';
+                directionText.textContent = 'Framåt';
+            } else {
+                directionEl.textContent = '⏪';
+                directionText.textContent = 'Bakåt';
+            }
+
+            // Spelarens kort
+            const playerCardsEl = document.getElementById('player-cards');
+            playerCardsEl.innerHTML = '';
+            gameState.playerCards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = `card ${isRedSuit(card.suit) ? 'red' : ''}`;
+                cardEl.textContent = `${card.value}${card.suit}`;
+                cardEl.onclick = () => playCard(index);
+                playerCardsEl.appendChild(cardEl);
             });
+
+            // Statistik
+            document.getElementById('moves').textContent = gameState.moves;
+            document.getElementById('cards-left').textContent = gameState.deckSize;
+            document.getElementById('players-online').textContent = 6;
         }
 
-        function flipCard(index = 0) {
-            if (cards.length === 0) return;
-            
-            if (index < cards.length) {
-                cards[index].flipped = !cards[index].flipped;
-                moves++;
-                displayCards();
-                updateStats();
-            }
+        // Kolla om färg är röd
+        function isRedSuit(suit) {
+            return suit === '♥' || suit === '♦';
         }
 
+        // Återställ spel
         function resetGame() {
-            cards = [];
-            moves = 0;
-            displayCards();
-            updateStats();
+            gameState = {
+                topCard: null,
+                direction: 1,
+                playerCards: [],
+                moves: 0,
+                deckSize: 52,
+                currentPlayer: 0
+            };
+            updateGameDisplay();
         }
 
-        function updateStats() {
-            document.getElementById('moves').textContent = moves;
-            document.getElementById('cards-left').textContent = cards.filter(card => !card.flipped).length;
-        }
-
-        // Starta spelet automatiskt
-        dealCards();
+        // Starta spelet när sidan laddas
+        document.addEventListener('DOMContentLoaded', newGame);
     </script>
 </body>
 </html>
