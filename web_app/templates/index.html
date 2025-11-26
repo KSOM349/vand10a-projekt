@@ -3,11 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vänd 10a Web</title>
+    <title>Vänd 10a - Webbspel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .card {
+            display: inline-block;
+            width: 80px;
+            height: 120px;
+            background: white;
+            color: black;
+            border-radius: 10px;
+            margin: 10px;
+            line-height: 120px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .card.red { color: red; }
+        .card.back {
+            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            color: white;
+        }
+        button {
+            background: #ffd700;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #ffed4e;
+        }
+        .info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>🎴 Vänd 10a Spel - Webbversion</h1>
-    <p>Webbapplikationen är under utveckling...</p>
-    <p><a href="/game">Spela spelet</a></p>
+    <div class="game-container">
+        <h1>🎴 Vänd 10a - Webbversion</h1>
+        <p>Ett interaktivt kortspel direkt i webbläsaren!</p>
+        
+        <div class="info">
+            <h3>🚫 Begränsad Demo</h3>
+            <p>Den fulla webbversionen med Flask-server kan köras lokalt.</p>
+            <p>För att spela den kompletta versionen:</p>
+            <code style="background: rgba(0,0,0,0.5); padding: 10px; display: block; border-radius: 5px;">
+                cd web_app<br>
+                python3 app.py
+            </code>
+        </div>
+
+        <div id="game-board">
+            <!-- Korten kommer här -->
+        </div>
+
+        <div>
+            <button onclick="dealCards()">Dela kort</button>
+            <button onclick="flipCard()">Vänd kort</button>
+            <button onclick="resetGame()">Nollställ</button>
+        </div>
+
+        <div class="info">
+            <h3>📊 Spelstatistik</h3>
+            <p>Antal drag: <span id="moves">0</span></p>
+            <p>Kort kvar: <span id="cards-left">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        let cards = [];
+        let moves = 0;
+
+        function dealCards() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            
+            cards = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    cards.push({
+                        value: value,
+                        suit: suit,
+                        flipped: false
+                    });
+                }
+            }
+            
+            // Blanda korten
+            cards.sort(() => Math.random() - 0.5);
+            
+            displayCards();
+            updateStats();
+        }
+
+        function displayCards() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            
+            // Visa bara de första 10 korten för demo
+            const displayCards = cards.slice(0, 10);
+            
+            displayCards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = `card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''} ${card.flipped ? '' : 'back'}`;
+                
+                if (card.flipped) {
+                    cardElement.textContent = `${card.value}${card.suit}`;
+                } else {
+                    cardElement.textContent = '?';
+                }
+                
+                cardElement.onclick = () => flipCard(index);
+                board.appendChild(cardElement);
+            });
+        }
+
+        function flipCard(index = 0) {
+            if (cards.length === 0) return;
+            
+            if (index < cards.length) {
+                cards[index].flipped = !cards[index].flipped;
+                moves++;
+                displayCards();
+                updateStats();
+            }
+        }
+
+        function resetGame() {
+            cards = [];
+            moves = 0;
+            displayCards();
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('cards-left').textContent = cards.filter(card => !card.flipped).length;
+        }
+
+        // Starta spelet automatiskt
+        dealCards();
+    </script>
 </body>
 </html>
