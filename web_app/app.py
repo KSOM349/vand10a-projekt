@@ -71,4 +71,4 @@ def handle_disconnect():
 if __name__ == '__main__':
     print("🎴 Vänd 10a Web Server startar...")
     print("🌐 Gå till: http://localhost:5000")
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
