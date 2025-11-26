@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎴 Vänd 10a Spel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 { font-size: 3em; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .description { font-size: 1.2em; margin-bottom: 30px; line-height: 1.6; }
+        .buttons { display: flex; flex-direction: column; gap: 15px; margin: 30px 0; }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .btn-primary { background: #2ecc71; border-color: #27ae60; }
+        .btn-primary:hover { background: #27ae60; }
+        .team { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .team-members { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+        .member { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 Vänd 10a</h1>
+        <p class="description">
+            Ett spännande och interaktivt kortspel utvecklat i Python med moderna webbteknologier!
+        </p>
+        <div class="buttons">
+            <a href="./web_app/templates/index.html" class="btn btn-primary">🎮 Spela Webbversion</a>
+            <a href="https://github.com/KSOM349/vand10a-projekt/tree/main/src" class="btn">🐍 Källkod (Python)</a>
+            <a href="https://github.com/KSOM349/vand10a-projekt/tree/main/docs" class="btn">📚 Dokumentation</a>
+        </div>
+        <div class="team">
+            <h3>👥 Vårt Team</h3>
+            <div class="team-members">
+                <span class="member">Marcus</span>
+                <span class="member">Fahad</span>
+                <span class="member">Ruffin</span>
+                <span class="member">Kaled</span>
+                <span class="member">Murgar</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
